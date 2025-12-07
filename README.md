@@ -1,2 +1,2 @@
-"# Computer_mathematics" 
-"# Computer_mathematics" 
+работаем как негры 
+
