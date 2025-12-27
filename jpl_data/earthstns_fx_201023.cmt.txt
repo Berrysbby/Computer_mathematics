@@ -1,0 +1,562 @@
+
+   SPK for DSN Station Locations
+   =====================================================================
+
+   Original file name:                   earthstns_fx_201023.bsp
+   Creation date:                        2020 October 28 12:30
+   Created by:                           Nat Bachman  (NAIF/JPL)
+
+
+   Introduction
+   =====================================================================
+
+   This file provides geocentric states---locations and velocities---for the
+   set of DSN stations cited in the list below under "Position Data."  Station
+   position vectors point from the earth's barycenter to the stations. Station
+   velocities are estimates of the derivatives with respect to time of these
+   vectors; in this file, velocities are constant. Station velocities have
+   magnitudes on the order of a few cm/year.
+
+   The states in this file are given relative to the terrestrial reference
+   frame ITRF93. In the interest of flexibility, in this file the reference
+   frame is labeled with the alias 'EARTH_FIXED'. Any application using this
+   file must map the alias 'EARTH_FIXED' to either 'ITRF93' or 'IAU_EARTH'.
+   See the discussion below under "Reference frame alias" for details.
+
+   This SPK file has a companion file
+
+      earthstns_itrf93_201023.bsp
+
+   which differs from this one only in that it uses the reference frame name
+   'ITRF93'. For high-accuracy work, the companion file is recommended (on the
+   basis of ease of use).
+
+
+   Revision description
+   --------------------
+
+   This kernel contains data from a single, current source: [1].
+
+   This kernel supersedes the kernel
+
+      earthstns_fx_050714.bsp
+
+   The set of stations covered by this file has changed from that of the file
+
+      earthstns_fx_050714.bsp
+
+   as follows:
+
+      Deleted stations (not present in current file):
+
+         PARKES
+         DSS-12
+         DSS-16
+         DSS-17
+         DSS-23
+         DSS-27
+         DSS-28
+         DSS-33
+         DSS-42
+         DSS-46
+         DSS-49 (alternate name for PARKES)
+         DSS-61
+         DSS-64 (alternate name for DSS-65)
+         DSS-66
+
+      Other deleted data:
+
+         Position data for the old location of DSS-65 prior to 2005 July 3
+         TDB are no longer included. This file extrapolates current data
+         backward in time for the entire time period covered by this file.
+         The superseded file
+
+            earthstns_fx_050714.bsp
+
+         should be used to obtain the old location of DSS-65 for dates prior
+         to 2005 July 3 TDB.
+
+      Added stations:
+
+         DSS-35
+         DSS-36
+         DSS-56
+
+      Name transfers---name now refers to a new station:
+
+         DSS-53
+
+
+   Planned updates
+   ---------------
+
+   Updates will be be made to keep this file in sync with updates to the
+   source document [1].
+
+   Values for DSS-53 are expected to be updated. Values for DSS-23 will be
+   added. There is no schedule for these changes at this time.
+
+
+   Using this kernel
+   =====================================================================
+
+   Kernel loading
+   --------------
+
+   In order for a SPICE-based program to make use of this kernel, the
+   kernel must be loaded via the SPICE routine FURNSH.  If you are
+   running application software created by a third party, see the
+   documentation for that software for instructions on kernel
+   management.
+
+   See also "Associated frame kernels" and "Associated PCK files"
+   below.
+
+   Users requiring data from superseded SPK versions can load those files
+   in addition to this one. In the case of conflicting data, data from SPKs
+   loaded later take precedence over SPKs loaded earlier.
+
+
+   Reference frame alias
+   ---------------------
+
+   This kernel uses the alias 'EARTH_FIXED' to designate the reference frame
+   relative to which the data in this kernel are specified. In order for this
+   kernel to be usable, the alias must be mapped to the name of a supported
+   terrestrial frame. For high-accuracy work, the frame name 'ITRF93' should
+   be used. In some situations, for example when low accuracy, long term
+   predictions are desired, it may be convenient to map 'EARTH_FIXED'
+   to 'IAU_EARTH'.
+
+   To map the alias, an application must load a text kernel containing
+   assignments as shown below.
+
+      \begintext
+
+      Map 'EARTH_FIXED' to ITRF93.  (To map to IAU_EARTH, substitute
+      'IAU_EARTH' for 'ITRF93' below.)
+
+      \begindata
+
+         TKFRAME_EARTH_FIXED_RELATIVE = 'ITRF93'
+         TKFRAME_EARTH_FIXED_SPEC     = 'MATRIX'
+         TKFRAME_EARTH_FIXED_MATRIX   = ( 1   0   0
+                                          0   1   0
+                                          0   0   1 )
+
+      \begintext
+
+
+   See the Frames Required Reading for details.
+
+   Associated PCK files
+   --------------------
+
+   For high-accuracy work, this kernel should be used together with a
+   high-precision, binary earth PCK file.
+
+      NAIF produces these kernels on a regular basis; they can be
+      obtained via anonymous ftp from the NAIF server
+
+         naif.jpl.nasa.gov
+
+      or downloaded from the URL
+
+         https://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/
+
+      The PCK is located in the path
+
+         pub/naif/generic_kernels/pck
+
+      The file name is of the form
+
+         earth_000101_yymmdd_yymmdd.bpc
+
+      The first two dates are the file's start and stop times; the third
+      is the epoch of the last datum in the EOP file:  data from
+      this epoch forward are predicted.
+
+      The file's coverage starts at a fixed date (currently chosen to
+      be 2000 Jan. 1) and extends to the end of the predict region,
+      which has a duration of roughly 3 months.
+
+      The same location contains a file with identical contents and a fixed
+      name:
+
+         earth_latest_high_prec.bpc
+
+      This file may be convenient for automated downloads.
+
+      NAIF also provides a low-accuracy, long-term predict binary Earth PCK.
+      See the file
+
+          aareadme.txt
+
+      in the location cited above for details.
+
+
+   Associated frame kernels
+   ------------------------
+
+   The frame kernel having (original) file name
+
+      earth_topo_201023.tf
+
+   defines topocentric reference frames associated with each of the stations
+   covered by this file. That kernel supports computations such as finding the
+   azimuth and elevation of a target as seen from a specified station.
+
+
+   Data sources
+   =====================================================================
+
+   All data presented here are from reference [1].
+
+
+   Reference Spheroid
+   ------------------
+
+   The reference bi-axial spheroid is defined by an equatorial and a
+   polar radius. Calling these Re and Rp respectively, the flattening
+   factor f is defined as
+
+      f = ( Re - Rp ) / Re
+
+   For the reference spheroid used by this file, the equatorial radius
+   Re and inverse flattening factor 1/f are
+
+      Re  = 6378137 m
+      1/f = 298.2572236
+
+   The reference spheroid is not used for the creation of this SPK file
+   but is used to create the associated frame kernel named above.
+
+
+   Epoch
+   -----
+
+   The epoch associated with these data is given by the source as
+   "2003.0."  The time variation of the data is slow enough so that
+   specification of the time system is unimportant. However, in the
+   creation of this file, the epoch is assumed to be
+
+      2003 Jan 1 00:00:00 TDB
+
+   At this epoch, the station positions are as given below.
+
+
+   Position data
+   -------------
+
+   Station locations in the ITRF93 frame at the specified epoch are:
+
+       Antenna  Diameter   x (m)            y (m)           z (m)
+
+       DSS 13   34m     -2351112.659    -4655530.636    +3660912.728
+       DSS 14   70m     -2353621.420    -4641341.472    +3677052.318
+       DSS 15   34m     -2353538.958    -4641649.429    +3676669.984 {3}
+       DSS 24   34m     -2354906.711    -4646840.095    +3669242.325
+       DSS 25   34m     -2355022.014    -4646953.204    +3669040.567
+       DSS 26   34m     -2354890.797    -4647166.328    +3668871.755
+       DSS 34   34m     -4461147.093    +2682439.239    -3674393.133 {1}
+       DSS 35   34m     -4461273.090    +2682568.925    -3674152.093 {1}
+       DSS 36   34m     -4461168.415    +2682814.657    -3674083.901 {1}
+       DSS 43   70m     -4460894.917    +2682361.507    -3674748.152
+       DSS 45   34m     -4460935.578    +2682765.661    -3674380.982 {3}
+       DSS 53   34m     +4849339.965     -360658.246    +4114747.290 {2}
+       DSS 54   34m     +4849434.488     -360723.8999   +4114618.835
+       DSS 55   34m     +4849525.256     -360606.0932   +4114495.084
+       DSS 56   34m     +4849421.679     -360549.659    +4114646.987
+       DSS 63   70m     +4849092.518     -360180.3480   +4115109.251
+       DSS 65   34m     +4849339.634     -360427.6637   +4114750.733
+
+       Notes from [1]:
+
+       {1} Position absolute accuracy estimated to be +/- 3cm (0.030m)
+           (1-sigma) for each coordinate.
+
+       {2} Position absolute accuracy estimated to be +/- 3m (3-sigma)
+           for each coordinate.
+
+       {3} Decommissioned. For historical reference only.
+
+
+   Velocity data
+   -------------
+
+   Station velocities in Cartesian coordinates, with respect to the
+   ITRF93 frame, are shown below.
+
+       Reference epoch for plate motion: 01-JAN-2003 00:00
+
+       Plate motion model, m/year
+
+                                         X         Y         Z
+       Goldstone:
+
+          Stations numbered 1X & 2X   -0.0180    0.0065    -0.0038
+
+       Canberra:
+
+          Stations numbered 3X & 4X   -0.0335   -0.0041     0.0392
+
+       Madrid:
+
+          Stations numbered 5X & 6X   -0.0100    0.0242     0.0156
+
+
+   Accuracy
+   --------
+
+   Location uncertainties at the 1 sigma level, for cylindrical coordinates,
+   are given by Table 7 of reference [1].
+
+
+   References
+   ----------
+
+   The data provided here are taken from the DSN document
+
+      [1] "301 Coverage and Geometry." DSN No. 810-005, 301, Rev. M
+          Issue Date: September 04, 2020. JPL D-19379; CL#20-3996.
+
+          URL: https://deepspace.jpl.nasa.gov/dsndocs/810-005/301/301M.pdf
+
+
+   Documentation for the SPICE Toolkit software is available here:
+
+       URL:  https://naif.jpl.nasa.gov
+
+
+   Kernel Data
+   =====================================================================
+
+\begintext
+
+   Station locations and velocities, along with topocentric reference frame
+   specification parameters:
+
+\begindata
+
+
+   SITES            +=       'DSS-13'
+   DSS-13_FRAME      =       'EARTH_FIXED'
+   DSS-13_CENTER     =       399
+   DSS-13_IDCODE     =       399013
+   DSS-13_EPOCH      =       @2003-JAN-01/00:00
+   DSS-13_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-13_XYZ        =    ( -2351.112659    -4655.530636    +3660.912728 )
+   DSS-13_DXYZ       =    (    -0.0180          0.0065         -0.0038   )
+   DSS-13_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-13_UP         =       'Z'
+   DSS-13_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-14'
+   DSS-14_FRAME      =       'EARTH_FIXED'
+   DSS-14_CENTER     =       399
+   DSS-14_IDCODE     =       399014
+   DSS-14_EPOCH      =       @2003-JAN-01/00:00
+   DSS-14_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-14_XYZ        =    ( -2353.621420    -4641.341472    +3677.052318 )
+   DSS-14_DXYZ       =    (    -0.0180          0.0065         -0.0038   )
+   DSS-14_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-14_UP         =       'Z'
+   DSS-14_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-15'
+   DSS-15_FRAME      =       'EARTH_FIXED'
+   DSS-15_CENTER     =       399
+   DSS-15_IDCODE     =       399015
+   DSS-15_EPOCH      =       @2003-JAN-01/00:00
+   DSS-15_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-15_XYZ        =    ( -2353.538958    -4641.649429    +3676.669984 )
+   DSS-15_DXYZ       =    (    -0.0180          0.0065         -0.0038   )
+   DSS-15_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-15_UP         =       'Z'
+   DSS-15_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-24'
+   DSS-24_FRAME      =       'EARTH_FIXED'
+   DSS-24_CENTER     =       399
+   DSS-24_IDCODE     =       399024
+   DSS-24_EPOCH      =       @2003-JAN-01/00:00
+   DSS-24_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-24_XYZ        =    ( -2354.906711    -4646.840095    +3669.242325 )
+   DSS-24_DXYZ       =    (    -0.0180          0.0065         -0.0038   )
+   DSS-24_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-24_UP         =       'Z'
+   DSS-24_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-25'
+   DSS-25_FRAME      =       'EARTH_FIXED'
+   DSS-25_CENTER     =       399
+   DSS-25_IDCODE     =       399025
+   DSS-25_EPOCH      =       @2003-JAN-01/00:00
+   DSS-25_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-25_XYZ        =    ( -2355.022014    -4646.953204    +3669.040567 )
+   DSS-25_DXYZ       =    (    -0.0180          0.0065         -0.0038   )
+   DSS-25_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-25_UP         =       'Z'
+   DSS-25_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-26'
+   DSS-26_FRAME      =       'EARTH_FIXED'
+   DSS-26_CENTER     =       399
+   DSS-26_IDCODE     =       399026
+   DSS-26_EPOCH      =       @2003-JAN-01/00:00
+   DSS-26_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-26_XYZ        =    ( -2354.890797    -4647.166328    +3668.871755 )
+   DSS-26_DXYZ       =    (    -0.0180          0.0065         -0.0038   )
+   DSS-26_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-26_UP         =       'Z'
+   DSS-26_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-34'
+   DSS-34_FRAME      =       'EARTH_FIXED'
+   DSS-34_CENTER     =       399
+   DSS-34_IDCODE     =       399034
+   DSS-34_EPOCH      =       @2003-JAN-01/00:00
+   DSS-34_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-34_XYZ        =    ( -4461.147093    +2682.439239    -3674.393133 )
+   DSS-34_DXYZ       =    (    -0.0335         -0.0041          0.0392   )
+   DSS-34_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-34_UP         =       'Z'
+   DSS-34_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-35'
+   DSS-35_FRAME      =       'EARTH_FIXED'
+   DSS-35_CENTER     =       399
+   DSS-35_IDCODE     =       399035
+   DSS-35_EPOCH      =       @2003-JAN-01/00:00
+   DSS-35_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-35_XYZ        =    ( -4461.273090    +2682.568925    -3674.152093 )
+   DSS-35_DXYZ       =    (    -0.0335         -0.0041          0.0392   )
+   DSS-35_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-35_UP         =       'Z'
+   DSS-35_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-36'
+   DSS-36_FRAME      =       'EARTH_FIXED'
+   DSS-36_CENTER     =       399
+   DSS-36_IDCODE     =       399036
+   DSS-36_EPOCH      =       @2003-JAN-01/00:00
+   DSS-36_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-36_XYZ        =    ( -4461.168415    +2682.814657    -3674.083901 )
+   DSS-36_DXYZ       =    (    -0.0335         -0.0041          0.0392   )
+   DSS-36_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-36_UP         =       'Z'
+   DSS-36_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-43'
+   DSS-43_FRAME      =       'EARTH_FIXED'
+   DSS-43_CENTER     =       399
+   DSS-43_IDCODE     =       399043
+   DSS-43_EPOCH      =       @2003-JAN-01/00:00
+   DSS-43_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-43_XYZ        =    (   -4460.894917    +2682.361507    -3674.748152 )
+   DSS-43_DXYZ       =    (      -0.0335         -0.0041          0.0392   )
+   DSS-43_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-43_UP         =       'Z'
+   DSS-43_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-45'
+   DSS-45_FRAME      =       'EARTH_FIXED'
+   DSS-45_CENTER     =       399
+   DSS-45_IDCODE     =       399045
+   DSS-45_EPOCH      =       @2003-JAN-01/00:00
+   DSS-45_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-45_XYZ        =    (  -4460.935578    +2682.765661    -3674.380982 )
+   DSS-45_DXYZ       =    (     -0.0335         -0.0041          0.0392   )
+   DSS-45_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-45_UP         =       'Z'
+   DSS-45_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-53'
+   DSS-53_FRAME      =       'EARTH_FIXED'
+   DSS-53_CENTER     =       399
+   DSS-53_IDCODE     =       399053
+   DSS-53_EPOCH      =       @2003-JAN-01/00:00
+   DSS-53_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-53_XYZ        =    (  +4849.339965     -360.658246    +4114.747290  )
+   DSS-53_DXYZ       =    (       -0.0100          0.0242          0.0156 )
+   DSS-53_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-53_UP         =       'Z'
+   DSS-53_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-54'
+   DSS-54_FRAME      =       'EARTH_FIXED'
+   DSS-54_CENTER     =       399
+   DSS-54_IDCODE     =       399054
+   DSS-54_EPOCH      =       @2003-JAN-01/00:00
+   DSS-54_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-54_XYZ        =    ( +4849.434488     -360.7238999   +4114.618835 )
+   DSS-54_DXYZ       =    (    -0.0100          0.0242          0.0156 )
+   DSS-54_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-54_UP         =       'Z'
+   DSS-54_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-55'
+   DSS-55_FRAME      =       'EARTH_FIXED'
+   DSS-55_CENTER     =       399
+   DSS-55_IDCODE     =       399055
+   DSS-55_EPOCH      =       @2003-JAN-01/00:00
+   DSS-55_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-55_XYZ        =    ( +4849.525256     -360.6060932   +4114.495084 )
+   DSS-55_DXYZ       =    (    -0.0100          0.0242          0.0156   )
+   DSS-55_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-55_UP         =       'Z'
+   DSS-55_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-56'
+   DSS-56_FRAME      =       'EARTH_FIXED'
+   DSS-56_CENTER     =       399
+   DSS-56_IDCODE     =       399056
+   DSS-56_EPOCH      =       @2003-JAN-01/00:00
+   DSS-56_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-56_XYZ        =    ( +4849.421679     -360.549659    +4114.646987 )
+   DSS-56_DXYZ       =    (    -0.0100          0.0242          0.0156   )
+   DSS-56_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-56_UP         =       'Z'
+   DSS-56_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-63'
+   DSS-63_FRAME      =       'EARTH_FIXED'
+   DSS-63_CENTER     =       399
+   DSS-63_IDCODE     =       399063
+   DSS-63_EPOCH      =       @2003-JAN-01/00:00
+   DSS-63_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-63_XYZ        =    ( +4849.092518     -360.1803480   +4115.109251 )
+   DSS-63_DXYZ       =    (    -0.0100          0.0242          0.0156   )
+   DSS-63_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-63_UP         =       'Z'
+   DSS-63_NORTH      =       'X'
+
+
+   SITES            +=       'DSS-65'
+   DSS-65_FRAME      =       'EARTH_FIXED'
+   DSS-65_CENTER     =       399
+   DSS-65_IDCODE     =       399065
+   DSS-65_EPOCH      =       @2003-JAN-01/00:00
+   DSS-65_BOUNDS     =    (  @1950-JAN-01/00:00,  @2150-JAN-01/00:00  )
+   DSS-65_XYZ        =    ( +4849.339634     -360.4276637   +4114.750733 )
+   DSS-65_DXYZ       =    (    -0.0100          0.0242          0.0156   )
+   DSS-65_TOPO_EPOCH =       @2020-OCT-23/00:00
+   DSS-65_UP         =       'Z'
+   DSS-65_NORTH      =       'X'
+
+\begintext

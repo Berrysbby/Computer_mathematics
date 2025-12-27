@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 GM_SUN     = 1.3271244004193938e11     # км^3 / c^2
 GM_MERCURY = GM_SUN * 1.6601e-7
 GM_EARTH   = GM_SUN * 3.0034896e-6
+GM_VENUS   = GM_SUN * 2.4478383e-6
+GM_JUPITER = GM_SUN * 9.547919e-4
+
 
 R_MERCURY = 2439.7                     # км
 AU_KM     = 1.495978707e8              # км
@@ -57,17 +60,43 @@ def load_jpl_vector_table(filename, body_name):
     return pos_i, vel_i, times[0], times[-1]
 
 
+
 # 3. ДИНАМИКА
-"""Вычисляет гравитационное ускорение КА от всех тел системы.
+"""Вычисляет гравитационное ускорение КА от всех тел системы.    Ускорение КА в системе Меркурия
+    r = r_sc - r_mercury
     Учитывает только гравитацию"""
 def acceleration(r, jd, bodies):
-    a = np.zeros(3) # Вектор ускорения
-    for pos_i, _, gm in bodies.values():
-        dr = pos_i(jd) - r  # Вектор от КА к телу
-        d  = np.linalg.norm(dr) # Расстояние
-        if d > 1e-6:     # Защита от деления на 0
-            a += gm * dr / d**3  # Вклад тела в ускорение
+    # положение Меркурия в SSB
+    r_mer = bodies["Mercury"][0](jd)
+
+    # положение КА в SSB
+    r_sc = r_mer + r
+
+    a = np.zeros(3)
+
+    # центральное притяжение Меркурия
+    d = np.linalg.norm(r)
+    if d > 1e-6:
+        a -= GM_MERCURY * r / d**3
+
+    # возмущения от остальных тел
+    for name, (pos_i, _, gm) in bodies.items():
+        if name in ("Mercury", "Messenger"):
+            continue
+
+        r_i = pos_i(jd)
+
+        dr_sc = r_i - r_sc
+        dr_mer = r_i - r_mer
+
+        d_sc = np.linalg.norm(dr_sc)
+        d_mer = np.linalg.norm(dr_mer)
+
+        if d_sc > 1e-6 and d_mer > 1e-6:
+            a += gm * (dr_sc / d_sc**3 - dr_mer / d_mer**3)
+
     return a
+
 
 
 def rk4_step(r, v, jd, dt_days, bodies):
@@ -92,159 +121,98 @@ def rk4_step(r, v, jd, dt_days, bodies):
 
 
 # 4. ФУНКЦИЯ ДЛЯ РИСОВАНИЯ КРУГОВЫХ ОРБИТ
-def plot_circular_orbits_comparison(data):
-    """Рисует сравнение круговых орбит MESSENGER относительно Меркурия"""
-    
-    print("\n" + "="*60)
-    print("СРАВНЕНИЕ КРУГОВЫХ ОРБИТ")
-    print("="*60)
+def plot_orbits_actual_coordinates(data):
+    """Строит 3D график орбит и график разницы между расчетными и JPL данными"""
     
     if isinstance(data, str):
         data = np.load(data)
     
-    traj_sc = data['sc_positions']  # интегрированная траектория
-    traj_eph = data['messenger_ephemeris']  # JPL
-    traj_mer = data['mercury_positions']
+    traj_sc = data['sc_positions']      # наши посчитанные координаты
+    traj_jpl = data['messenger_ephemeris']  # JPL координаты
+    times = data['times']                # временные метки
     
-    # переводим в систему отсчета Меркурия
-    sc_rel = traj_sc - traj_mer
-    eph_rel = traj_eph - traj_mer
+    # Вычисляем разницу между расчетными и JPL данными
+    pos_diff = np.linalg.norm(traj_sc - traj_jpl, axis=1)
     
-    # 1. Находим плоскость орбиты методом PCA
-    def fit_orbital_plane(points):
-        """Находит плоскость орбиты через PCA"""
-        # Центрируем точки
-        center = np.mean(points, axis=0)
-        centered = points - center
-        
-        # PCA для нахождения главных компонент
-        U, s, Vt = np.linalg.svd(centered)
-        
-        # Нормаль к плоскости (наименьшая компонента)
-        normal = Vt[2]
-        
-        # Два главных направления в плоскости орбиты
-        u1 = Vt[0]  # Первый главный компонент
-        u2 = Vt[1]  # Второй главный компонент
-        
-        # Среднее расстояние от центра
-        distances = np.linalg.norm(centered, axis=1)
-        mean_radius = np.mean(distances)
-        
-        # Эксцентриситет 
-        eccentricity = 1 - s[1]/s[0] if s[0] > 0 else 0
-        
-        return center, normal, u1, u2, mean_radius, eccentricity
+    # Создаем фигуру с двумя subplots
+    fig = plt.figure(figsize=(15, 6))
     
-    # Анализ обеих траекторий
-    sc_center, sc_normal, sc_u1, sc_u2, sc_mean_radius, sc_eccentricity = fit_orbital_plane(sc_rel)
-    eph_center, eph_normal, eph_u1, eph_u2, eph_mean_radius, eph_eccentricity = fit_orbital_plane(eph_rel)
+    # 1. 3D график орбит
+    ax1 = fig.add_subplot(121, projection='3d')
     
-    print(f"\nИнтегрированная орбита:")
-    print(f"  Средний радиус: {sc_mean_radius:.1f} км")
-    print(f"  Эксцентриситет: {sc_eccentricity:.4f}")
-    print(f"  Нормаль к плоскости: {sc_normal}")
+    # Строим наши посчитанные координаты (синяя линия)
+    ax1.plot(traj_sc[:, 0], traj_sc[:, 1], traj_sc[:, 2], 
+            'b-', linewidth=1.5, alpha=0.7, label='Наши расчеты')
     
-    print(f"\nJPL:")
-    print(f"  Средний радиус: {eph_mean_radius:.1f} км")
-    print(f"  Эксцентриситет: {eph_eccentricity:.4f}")
-    print(f"  Нормаль к плоскости: {eph_normal}")
+    # Строим JPL координаты (красная линия)
+    ax1.plot(traj_jpl[:, 0], traj_jpl[:, 1], traj_jpl[:, 2], 
+            'r--', linewidth=1.5, alpha=0.7, label='JPL данные')
     
-    # 2. Строим круговые орбиты в реальных плоскостях
-    def create_circular_orbit(center, u1, u2, radius, num_points=500):
-        """Создает круговую орбиту в заданной плоскости"""
-        theta = np.linspace(0, 2*np.pi, num_points)
-        
-        # параметрическое уравнение круга в плоскости орбиты
-        # point = center + radius * (cosθ * u1 + sinθ * u2)
-        orbit_points = np.zeros((num_points, 3))
-        
-        for i, angle in enumerate(theta):
-            # Вектор в плоскости орбиты
-            in_plane_vector = radius * (np.cos(angle) * u1 + np.sin(angle) * u2)
-            orbit_points[i] = center + in_plane_vector
-        
-        return orbit_points
+    # Начальные точки
+    ax1.scatter(traj_sc[0, 0], traj_sc[0, 1], traj_sc[0, 2], 
+               color='blue', s=30, marker='o', label='Начало (расчет)')
+    ax1.scatter(traj_jpl[0, 0], traj_jpl[0, 1], traj_jpl[0, 2], 
+               color='red', s=30, marker='s', label='Начало (JPL)')
     
-    # Создаем идеальные круговые орбиты
-    sc_circle = create_circular_orbit(sc_center, sc_u1, sc_u2, sc_mean_radius)
-    eph_circle = create_circular_orbit(eph_center, eph_u1, eph_u2, eph_mean_radius)
+    # Конечные точки
+    ax1.scatter(traj_sc[-1, 0], traj_sc[-1, 1], traj_sc[-1, 2], 
+               color='blue', s=30, marker='^', label='Конец (расчет)')
+    ax1.scatter(traj_jpl[-1, 0], traj_jpl[-1, 1], traj_jpl[-1, 2], 
+               color='red', s=30, marker='v', label='Конец (JPL)')
     
-    # 3. Проецируем на лучшую плоскость для визуализации
-    # Находим оси с наибольшей вариацией
-    def find_best_plane(points):
-        """Находит лучшую плоскость для проекции"""
-        ranges = np.ptp(points, axis=0)
-        sorted_indices = np.argsort(ranges)[::-1]
-        return sorted_indices[:2]  # Две оси с наибольшим размахом
-    
-    best_axes = find_best_plane(sc_rel)
-    axis_names = ['X', 'Y', 'Z']
-    
-    print(f"\nОси для отображения: {axis_names[best_axes[0]]} и {axis_names[best_axes[1]]}")
-    
-    # 4. Создаем графики
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
-    
-    # 1: Круговые орбиты в 2D проекции 
-    ax1.plot(sc_circle[:, best_axes[0]], sc_circle[:, best_axes[1]], 
-             'b-', linewidth=3, alpha=0.8, 
-             label=f'Интегрированная (R={sc_mean_radius:.0f} км)')
-    ax1.plot(eph_circle[:, best_axes[0]], eph_circle[:, best_axes[1]], 
-             'r--', linewidth=3, alpha=0.8, 
-             label=f'JPL (R={eph_mean_radius:.0f} км)')
-    ax1.plot(0, 0, 'ko', markersize=10, label='Меркурий')
-    ax1.plot(0, 0, 'yo', markersize=6)
-    ax1.set_xlabel(f'{axis_names[best_axes[0]]} (км)')
-    ax1.set_ylabel(f'{axis_names[best_axes[1]]} (км)')
-    ax1.set_title('Идеальные круговые орбиты')
+    ax1.set_xlabel('X (км)')
+    ax1.set_ylabel('Y (км)')
+    ax1.set_zlabel('Z (км)')
+    ax1.set_title('Орбиты MESSENGER: наши расчеты vs JPL данные (SSB координаты)')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
-    ax1.axis('equal')
     
-    # 2: 3D вид орбит 
-    ax2 = fig.add_subplot(122, projection='3d')
+    # 2. График разницы между расчетными и JPL данными
+    ax2 = fig.add_subplot(122)
     
-    # реальные траектории
-    ax2.plot(sc_rel[:, 0], sc_rel[:, 1], sc_rel[:, 2], 
-             'b-', linewidth=1, alpha=0.5, label='Интегрированная')
-    ax2.plot(eph_rel[:, 0], eph_rel[:, 1], eph_rel[:, 2], 
-             'r--', linewidth=1, alpha=0.5, label='JPL')
+    # Преобразуем JD во время в днях от начала
+    days_from_start = times - times[0]
     
-    # круговые орбиты
-    ax2.plot(sc_circle[:, 0], sc_circle[:, 1], sc_circle[:, 2], 
-             'b-', linewidth=2, alpha=0.8, label='Круг (интегр.)')
-    ax2.plot(eph_circle[:, 0], eph_circle[:, 1], eph_circle[:, 2], 
-             'r--', linewidth=2, alpha=0.8, label='Круг (JPL)')
+    ax2.plot(days_from_start, pos_diff, 'g-', linewidth=2, alpha=0.8)
+    ax2.fill_between(days_from_start, 0, pos_diff, alpha=0.3, color='green')
     
-    ax2.scatter([0], [0], [0], color='black', s=100, label='Меркурий')
-    ax2.scatter([0], [0], [0], color='yellow', s=50)
+    # Добавляем горизонтальную линию для средней разницы
+    mean_diff = pos_diff.mean()
+    ax2.axhline(y=mean_diff, color='r', linestyle='--', alpha=0.7, 
+                label=f'Средняя: {mean_diff:.2f} км')
     
-    ax2.set_xlabel('X (км)')
-    ax2.set_ylabel('Y (км)')
-    ax2.set_zlabel('Z (км)')
-    ax2.set_title('3D вид орбит и плоскостей')
+    # Находим и отмечаем максимальную разницу
+    max_diff = pos_diff.max()
+    max_idx = np.argmax(pos_diff)
+    ax2.scatter(days_from_start[max_idx], max_diff, color='red', s=50, zorder=5)
+    ax2.annotate(f'Макс: {max_diff:.2f} км', 
+                xy=(days_from_start[max_idx], max_diff),
+                xytext=(10, 10), textcoords='offset points',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+    
+    ax2.set_xlabel('Время от начала (дни)')
+    ax2.set_ylabel('Разница позиций (км)')
+    ax2.set_title('Разница между расчетными и JPL данными MESSENGER')
+    ax2.grid(True, alpha=0.3)
     ax2.legend()
     
+    
     plt.tight_layout()
-    plt.savefig('circular_orbits_comparison_corrected.png', dpi=150, bbox_inches='tight')
-    print("\nСохранен график: circular_orbits_comparison_corrected.png")
+    plt.savefig('orbits_comparison.png', dpi=150, bbox_inches='tight')
+    print("\nСохранен график: orbits_comparison.png")
+    print(f"  Средняя разница позиций: {mean_diff:.2f} км")
+    print(f"  Максимальная разница позиций: {max_diff:.2f} км")
     plt.show()
     
-    
-    
-    return sc_circle, eph_circle
-
+    return traj_sc, traj_jpl, pos_diff
 
 # 5. Запуск
 def solve_direct_problem():
-    print("="*60)
     print("Решение прямой задачи для MESSENGER")
-    print("="*60)
 
     start_jd = 2457024.5
     end_jd   = 2457141.5
-    dt_hours = 0.1     # шаг интегрирования 6 минут
+    dt_hours = 0.002     # шаг интегрирования 6 минут
     dt_days  = dt_hours / 24.0
 
     print(f"Период: {start_jd:.1f} – {end_jd:.1f} JD")
@@ -257,8 +225,10 @@ def solve_direct_problem():
     files = {
         "Sun":     (GM_SUN,     "sun.txt"),
         "Mercury": (GM_MERCURY, "mercury.txt"),
+        "Venus":   (GM_VENUS,   "venus.txt"),
         "Earth":   (GM_EARTH,   "earth.txt"),
-        "Messenger": (0.0,      "messenger.txt")  
+        "Jupiter": (GM_JUPITER, "jupiter.txt"),
+        "Messenger": (0.0,      "messenger.txt")
     }
 
     for name, (gm, fname) in files.items():
@@ -280,8 +250,9 @@ def solve_direct_problem():
     messenger_vel = bodies["Messenger"][1]
     
     # начальные условия
-    r = messenger_pos(start_jd)
-    v = messenger_vel(start_jd)
+    r = messenger_pos(start_jd) - bodies["Mercury"][0](start_jd)
+    v = messenger_vel(start_jd) - bodies["Mercury"][1](start_jd)
+
     
     # интегрирование
     print("\n3. Интегрирование")
@@ -303,7 +274,9 @@ def solve_direct_problem():
         if i % int(6/dt_hours) == 0:
             times.append(jd)
 
-            traj_sc.append(r.copy())
+            r_mer = bodies["Mercury"][0](jd)
+            traj_sc.append((r + r_mer).copy())
+
             
             # позиции из Messenger для сравнения
             traj_messenger_eph.append(messenger_pos(jd).copy())
@@ -312,12 +285,14 @@ def solve_direct_problem():
             ep = bodies["Earth"][0](jd)
             sp = bodies["Sun"][0](jd)
 
+            r_sc = r + mp  # КА в SSB
+
+            dist_mercury.append(np.linalg.norm(r_sc - mp))
+            dist_earth.append(np.linalg.norm(r_sc - ep))
+            dist_sun.append(np.linalg.norm(r_sc - sp))
+
             traj_mer.append(mp.copy())
             traj_earth.append(ep.copy())
-
-            dist_mercury.append(np.linalg.norm(r - mp))
-            dist_earth.append(np.linalg.norm(r - ep))
-            dist_sun.append(np.linalg.norm(r - sp))
 
         r, v = rk4_step(r, v, jd, dt_days, bodies)
         jd += dt_days
@@ -377,7 +352,7 @@ def solve_direct_problem():
     print(f"Обработка завершена. Файл с результатами: {output_file}")
     
     # Визуализация круговых орбит
-    plot_circular_orbits_comparison(output_file)
+    plot_orbits_actual_coordinates(output_file)
     
     return True
 
